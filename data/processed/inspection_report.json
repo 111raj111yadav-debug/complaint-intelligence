@@ -1,0 +1,52 @@
+{
+  "total_records": 162421,
+  "columns": ["Unnamed: 0", "product", "narrative"],
+  "text_column": "narrative",
+  "label_column": "product",
+  "data_quality": {
+    "missing_text_count": 10,
+    "missing_text_percent": 0.0062,
+    "missing_label_count": 0,
+    "duplicate_text_count": 37948,
+    "duplicate_text_percent": 23.36,
+    "usable_unique_records": 124463
+  },
+  "class_distribution": {
+    "credit_reporting": {
+      "count": 91179,
+      "percentage": 56.14
+    },
+    "debt_collection": {
+      "count": 23150,
+      "percentage": 14.25
+    },
+    "mortgages_and_loans": {
+      "count": 18990,
+      "percentage": 11.69
+    },
+    "credit_card": {
+      "count": 15566,
+      "percentage": 9.58
+    },
+    "retail_banking": {
+      "count": 13536,
+      "percentage": 8.33
+    }
+  },
+  "text_length_statistics": {
+    "char_length": {
+      "min": 3,
+      "max": 20596,
+      "mean": 588.54,
+      "median": 361.0,
+      "p95": 1755.0
+    },
+    "word_count": {
+      "min": 1,
+      "max": 2685,
+      "mean": 80.23,
+      "median": 50.0,
+      "p95": 240.0
+    }
+  }
+}

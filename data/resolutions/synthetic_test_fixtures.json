@@ -1,0 +1,40 @@
+[
+  {
+    "reference_code": "FIXTURE-UNVERIFIED-001",
+    "title": "Synthetic Mock Fixture: Unverified Resolution Draft",
+    "category": "credit_card",
+    "complaint_text": "Synthetic test complaint: Hypothetical unverified dispute regarding promotional reward points.",
+    "resolution_text": "Synthetic test resolution: Unverified draft notes from automated scratchpad. Not a validated outcome.",
+    "resolution_outcome": "UNVERIFIED_PENDING_REVIEW",
+    "is_verified": false,
+    "verification_status": "UNVERIFIED_SYNTHETIC",
+    "data_source": "SYNTHETIC_TEST_FIXTURE",
+    "provenance": {
+      "note": "For automated unit tests only. Must be excluded from production RAG retrieval pipelines.",
+      "synthetic": true
+    },
+    "metadata": {
+      "is_test_fixture": true
+    },
+    "department_code": "DEPT_CARDS"
+  },
+  {
+    "reference_code": "FIXTURE-UNVERIFIED-002",
+    "title": "Synthetic Mock Fixture: Crypto Currency Non-Regulated Dispute",
+    "category": "retail_banking",
+    "complaint_text": "Synthetic test complaint: Hypothetical dispute regarding offshore decentralized token swap.",
+    "resolution_text": "Synthetic test resolution: Non-regulated transaction disclaimer placeholder.",
+    "resolution_outcome": "DISMISSED_OUTSIDE_JURISDICTION",
+    "is_verified": false,
+    "verification_status": "UNVERIFIED_SYNTHETIC",
+    "data_source": "SYNTHETIC_TEST_FIXTURE",
+    "provenance": {
+      "note": "Synthetic test fixture for edge case testing.",
+      "synthetic": true
+    },
+    "metadata": {
+      "is_test_fixture": true
+    },
+    "department_code": "DEPT_BANKING"
+  }
+]

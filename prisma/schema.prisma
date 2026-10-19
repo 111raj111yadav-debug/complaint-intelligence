@@ -1,0 +1,327 @@
+// ==============================================================================
+// Prisma Schema: Intelligent Customer Complaint Analysis
+// Phase 1: Complaint Ingestion, NLP Analysis, Urgency & Department Routing
+// Phase 2: pgvector HNSW Embeddings & RAG Resolution Recommendations
+// Phase 3: RBAC Security, Workflow State Audit, Provenance & Operational Analytics
+// ==============================================================================
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [vector]
+}
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+// Foundational verification model for health checks and database connectivity
+model SystemHealthCheck {
+  id        String   @id @default(uuid())
+  service   String   @db.VarChar(100)
+  status    String   @db.VarChar(50)
+  details   String?  @db.Text
+  checkedAt DateTime @default(now()) @map("checked_at")
+
+  @@map("system_health_checks")
+}
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  AGENT
+  AUDITOR
+}
+
+enum ComplaintStatus {
+  PENDING
+  ANALYZED
+  IN_REVIEW
+  RESOLVED
+  DISMISSED
+}
+
+enum UrgencyLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+model Department {
+  id          String   @id @default(uuid())
+  code        String   @unique @db.VarChar(50)
+  name        String   @db.VarChar(100)
+  description String?  @db.Text
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  analyses    ComplaintAnalysis[]
+  resolutions Resolution[]
+  assignments Assignment[]
+  users       User[]
+
+  @@map("departments")
+}
+
+model User {
+  id           String      @id @default(uuid())
+  email        String      @unique @db.VarChar(150)
+  passwordHash String      @map("password_hash") @db.VarChar(255)
+  fullName     String      @map("full_name") @db.VarChar(100)
+  role         UserRole    @default(AGENT)
+  departmentId String?     @map("department_id")
+  department   Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  isActive     Boolean     @default(true) @map("is_active")
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
+
+  assignedComplaints  Assignment[]              @relation("AssignedToUser")
+  assignedByMe        Assignment[]              @relation("AssignedByUser")
+  statusTransitions   ComplaintAuditLog[]       @relation("TransitionUser")
+  feedbackSubmissions RecommendationFeedback[]  @relation("FeedbackUser")
+
+  @@index([role])
+  @@index([email])
+  @@map("users")
+}
+
+model Complaint {
+  id              String          @id @default(uuid())
+  referenceNumber String          @unique @map("reference_number") @db.VarChar(50)
+  originalText    String          @map("original_text") @db.Text
+  sanitizedText   String?         @map("sanitized_text") @db.Text
+  source          String          @default("WEB") @db.VarChar(50)
+  status          ComplaintStatus @default(PENDING)
+
+  // Phase 3 SLA & Operational tracking fields
+  firstAssignedAt DateTime?       @map("first_assigned_at")
+  resolvedAt      DateTime?       @map("resolved_at")
+  slaDeadline     DateTime?       @map("sla_deadline")
+  isOverdue       Boolean         @default(false) @map("is_overdue")
+
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+
+  analyses        ComplaintAnalysis[]
+  resolutions     Resolution[]
+  recommendations ResolutionRecommendation[]
+  assignments     Assignment[]
+  auditLogs       ComplaintAuditLog[]
+
+  @@index([status])
+  @@index([createdAt])
+  @@index([isOverdue])
+  @@map("complaints")
+}
+
+model ComplaintAuditLog {
+  id          String           @id @default(uuid())
+  complaintId String           @map("complaint_id")
+  complaint   Complaint        @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  fromStatus  ComplaintStatus? @map("from_status")
+  toStatus    ComplaintStatus? @map("to_status")
+
+  actorId     String?          @map("actor_id")
+  actor       User?            @relation("TransitionUser", fields: [actorId], references: [id], onDelete: SetNull)
+  actorName   String?          @map("actor_name") @db.VarChar(100)
+  action      String           @default("STATUS_CHANGE") @db.VarChar(50)
+  reason      String?          @db.Text
+  metadata    Json?            @map("metadata")
+  createdAt   DateTime         @default(now()) @map("created_at")
+
+  @@index([complaintId])
+  @@index([createdAt])
+  @@map("complaint_audit_logs")
+}
+
+model ComplaintAnalysis {
+  id                      String       @id @default(uuid())
+  complaintId             String       @map("complaint_id")
+  complaint               Complaint    @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+
+  predictedCategory       String       @map("predicted_category") @db.VarChar(100)
+  categoryConfidence      Float        @map("category_confidence")
+  categoryProbabilities   Json?        @map("category_probabilities")
+
+  sentimentLabel          String       @map("sentiment_label") @db.VarChar(50)
+  sentimentScore          Float        @map("sentiment_score")
+  sentimentCompound       Float?       @map("sentiment_compound")
+  sentimentScores         Json?        @map("sentiment_scores")
+
+  emotionPrimary          String       @map("emotion_primary") @db.VarChar(50)
+  emotionConfidence       Float        @map("emotion_confidence")
+  emotionScores           Json?        @map("emotion_scores")
+  emotionSecondary        String[]     @map("emotion_secondary")
+
+  urgencyLevel            UrgencyLevel @map("urgency_level")
+  urgencyScore            Int          @map("urgency_score")
+  urgencyReasons          Json         @map("urgency_reasons")
+  humanReviewRequired     Boolean      @default(false) @map("human_review_required")
+
+  recommendedDepartmentId String?      @map("recommended_department_id")
+  recommendedDepartment   Department?  @relation(fields: [recommendedDepartmentId], references: [id], onDelete: SetNull)
+  departmentCode          String       @map("department_code") @db.VarChar(50)
+
+  modelVersions           Json         @map("model_versions")
+  analysisTimestamp       DateTime     @default(now()) @map("analysis_timestamp")
+  status                  String       @default("SUCCESS") @db.VarChar(50)
+  errorMessage            String?      @map("error_message") @db.Text
+
+  createdAt               DateTime     @default(now()) @map("created_at")
+
+  @@index([complaintId])
+  @@index([predictedCategory])
+  @@index([urgencyLevel])
+  @@index([departmentCode])
+  @@map("complaint_analyses")
+}
+
+model Resolution {
+  id                 String                     @id @default(uuid())
+  referenceCode      String                     @unique @map("reference_code") @db.VarChar(50)
+  title              String                     @db.VarChar(255)
+  complaintText      String                     @map("complaint_text") @db.Text
+  resolutionText     String                     @map("resolution_text") @db.Text
+  resolutionOutcome  String                     @map("resolution_outcome") @db.VarChar(100)
+  category           String                     @db.VarChar(100)
+  departmentCode     String                     @map("department_code") @db.VarChar(50)
+
+  departmentId       String?                    @map("department_id")
+  department         Department?                @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+
+  complaintId        String?                    @map("complaint_id")
+  complaint          Complaint?                 @relation(fields: [complaintId], references: [id], onDelete: SetNull)
+
+  isVerified         Boolean                    @default(true) @map("is_verified")
+  verificationStatus String                     @default("VERIFIED") @map("verification_status") @db.VarChar(50)
+  dataSource         String                     @default("SOP_KNOWLEDGE_BASE") @map("data_source") @db.VarChar(100)
+  provenance         Json?                      @map("provenance")
+  metadata           Json?                      @map("metadata")
+
+  // Phase 3 provenance extensions
+  sourceTitle        String?                    @map("source_title") @db.VarChar(255)
+  sourceUrl          String?                    @map("source_url") @db.VarChar(500)
+  sourceOrg          String?                    @map("source_org") @db.VarChar(100)
+  contentType        String                     @default("REGULATORY_PLAYBOOK") @map("content_type") @db.VarChar(50)
+  lastVerifiedAt     DateTime?                  @map("last_verified_at")
+  version            String                     @default("1.0.0") @map("version") @db.VarChar(20)
+
+  embeddingModel     String                     @default("all-MiniLM-L6-v2") @map("embedding_model") @db.VarChar(100)
+  embeddingStatus    String                     @default("PENDING") @map("embedding_status") @db.VarChar(50)
+  embedding          Unsupported("vector(384)")?
+
+  createdAt          DateTime                   @default(now()) @map("created_at")
+  updatedAt          DateTime                   @updatedAt @map("updated_at")
+
+  recommendationSources RecommendationSource[]
+
+  @@index([category])
+  @@index([departmentCode])
+  @@index([isVerified])
+  @@index([embeddingStatus])
+  @@map("resolutions")
+}
+
+model ResolutionRecommendation {
+  id                   String                  @id @default(uuid())
+  complaintId          String                  @map("complaint_id")
+  complaint            Complaint               @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+
+  suggestedSteps       Json                    @map("suggested_steps")
+  rationale            String                  @db.Text
+  evidenceStrength     String                  @map("evidence_strength") @db.VarChar(50)
+  confidenceScore      Float                   @map("confidence_score")
+  evidenceLimitations  Json                    @map("evidence_limitations")
+  humanReviewRequired  Boolean                 @default(false) @map("human_review_required")
+  reviewReasons        Json                    @map("review_reasons")
+
+  modelProvider        String                  @map("model_provider") @db.VarChar(100)
+  modelIdentifier      String                  @map("model_identifier") @db.VarChar(100)
+  promptVersion        String                  @map("prompt_version") @db.VarChar(50)
+  status               String                  @default("GENERATED") @db.VarChar(50)
+
+  createdAt            DateTime                @default(now()) @map("created_at")
+  updatedAt            DateTime                @updatedAt @map("updated_at")
+
+  sources              RecommendationSource[]
+  feedback             RecommendationFeedback?
+
+  @@index([complaintId])
+  @@index([evidenceStrength])
+  @@index([humanReviewRequired])
+  @@map("resolution_recommendations")
+}
+
+model RecommendationSource {
+  id               String                   @id @default(uuid())
+  recommendationId String                   @map("recommendation_id")
+  recommendation   ResolutionRecommendation @relation(fields: [recommendationId], references: [id], onDelete: Cascade)
+
+  resolutionId     String                   @map("resolution_id")
+  resolution       Resolution               @relation(fields: [resolutionId], references: [id], onDelete: Cascade)
+
+  similarityScore  Float                    @map("similarity_score")
+  rank             Int                      @map("rank")
+  citationReason   String?                  @map("citation_reason") @db.Text
+
+  createdAt        DateTime                 @default(now()) @map("created_at")
+
+  @@unique([recommendationId, resolutionId])
+  @@index([recommendationId])
+  @@index([resolutionId])
+  @@map("recommendation_sources")
+}
+
+model RecommendationFeedback {
+  id                 String                   @id @default(uuid())
+  recommendationId   String                   @unique @map("recommendation_id")
+  recommendation     ResolutionRecommendation @relation(fields: [recommendationId], references: [id], onDelete: Cascade)
+
+  wasAccepted        Boolean                  @map("was_accepted")
+  agentModifications String?                  @map("agent_modifications") @db.Text
+  agentRating        Int?                     @map("agent_rating")
+  feedbackNotes      String?                  @map("feedback_notes") @db.Text
+  submittedBy        String?                  @map("submitted_by") @db.VarChar(100)
+
+  // Phase 3 feedback extensions
+  userId             String?                  @map("user_id")
+  user               User?                    @relation("FeedbackUser", fields: [userId], references: [id], onDelete: SetNull)
+  feedbackDecision   String                   @default("ACCEPTED") @map("feedback_decision") @db.VarChar(50)
+  rejectionReason    String?                  @map("rejection_reason") @db.Text
+  rubricScores       Json?                    @map("rubric_scores")
+
+  createdAt          DateTime                 @default(now()) @map("created_at")
+
+  @@map("recommendation_feedback")
+}
+
+model Assignment {
+  id                 String      @id @default(uuid())
+  complaintId        String      @map("complaint_id")
+  complaint          Complaint   @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  departmentId       String      @map("department_id")
+  department         Department  @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  assignedBy         String      @default("SYSTEM_NLP_ROUTER") @map("assigned_by") @db.VarChar(100)
+  assignedTo         String?     @map("assigned_to") @db.VarChar(100)
+  notes              String?     @db.Text
+  status             String      @default("ASSIGNED") @db.VarChar(50)
+
+  // Phase 3 assignment tracking & reassignment
+  assignedToUserId   String?     @map("assigned_to_user_id")
+  assignedToUser     User?       @relation("AssignedToUser", fields: [assignedToUserId], references: [id], onDelete: SetNull)
+  assignedByUserId   String?     @map("assigned_by_user_id")
+  assignedByUser     User?       @relation("AssignedByUser", fields: [assignedByUserId], references: [id], onDelete: SetNull)
+  isCurrent          Boolean     @default(true) @map("is_current")
+  reassignReason     String?     @map("reassign_reason") @db.Text
+  completedAt        DateTime?   @map("completed_at")
+
+  createdAt          DateTime    @default(now()) @map("created_at")
+
+  @@index([complaintId])
+  @@index([departmentId])
+  @@index([isCurrent])
+  @@map("assignments")
+}

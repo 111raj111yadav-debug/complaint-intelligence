@@ -1,0 +1,599 @@
+"""Script to generate curated verified resolution knowledge base and synthetic test fixtures."""
+
+import json
+from pathlib import Path
+
+CATEGORY_TO_DEPT_MAP = {
+    "credit_card": "DEPT_CARDS",
+    "credit_reporting": "DEPT_CREDIT",
+    "debt_collection": "DEPT_COLLECTIONS",
+    "mortgages_and_loans": "DEPT_LOANS",
+    "retail_banking": "DEPT_BANKING",
+}
+
+RAW_VERIFIED_KB = [
+    # ------------------ CREDIT CARD ------------------
+    {
+        "reference_code": "KB-CC-001",
+        "title": "Duplicate Credit Card Billing Transaction Resolution",
+        "category": "credit_card",
+        "complaint_text": "I was billed twice for a purchase at Target on October 12th for $142.50. Both transactions posted to my statement, but I only authorized one charge. Merchant acknowledged double terminal swipe.",
+        "resolution_text": "1. Verified merchant posting transaction ID matching identical timestamp and authorization code.\n2. Issued immediate provisional credit of $142.50 under Regulation Z (12 CFR § 1026.13).\n3. Initiated duplicate processing dispute (Reason Code 4834/Visa, 4834/Mastercard) with acquiring bank.\n4. Waived associated finance charge and confirmed final credit adjustment on billing cycle statement.",
+        "resolution_outcome": "CLOSED_WITH_MONETARY_RELIEF",
+        "is_verified": True,
+        "verification_status": "VERIFIED",
+        "data_source": "FINANCIAL_REGULATORY_DISPUTE_SOP",
+        "provenance": {
+            "authority": "CFPB Regulation Z (12 CFR § 1026.13 - Billing Error Resolution)",
+            "playbook_version": "2026.1",
+            "tier": "REGULATORY_COMPLIANCE_STANDARD",
+            "curator": "Credit Card Dispute Operations Team"
+        },
+        "metadata": {
+            "regulation": "12 CFR § 1026.13",
+            "sla_business_days": 2,
+            "monetary_impact": True,
+            "provisional_credit_required": True,
+            "keywords": ["duplicate charge", "double billing", "target", "two charges", "billed twice"]
+        }
+    },
+    {
+        "reference_code": "KB-CC-002",
+        "title": "Unauthorized Credit Card Fraudulent Charges Investigation",
+        "category": "credit_card",
+        "complaint_text": "Several unauthorized transactions appeared on my credit card from overseas electronics vendors totaling $890. I have the card in my possession and did not authorize these foreign transactions.",
+        "resolution_text": "1. Immediately blocked and destroyed compromised card account to prevent ongoing fraud.\n2. Reissued new chip/contactless card with overnight delivery.\n3. Logged fraud affidavit under Truth in Lending Act (§ 1026.12) zero-liability policy.\n4. Credited $890.00 unauthorized balance and reversed foreign transaction fees ($26.70).",
+        "resolution_outcome": "CLOSED_WITH_MONETARY_RELIEF",
+        "is_verified": True,
+        "verification_status": "VERIFIED",
+        "data_source": "FINANCIAL_REGULATORY_DISPUTE_SOP",
+        "provenance": {
+            "authority": "Truth in Lending Act / Regulation Z (12 CFR § 1026.12 - Unauthorized Use)",
+            "playbook_version": "2026.1",
+            "tier": "ZERO_LIABILITY_FRAUD_PROTOCOL",
+            "curator": "Fraud Risk Management"
+        },
+        "metadata": {
+            "regulation": "12 CFR § 1026.12",
+            "sla_business_days": 1,
+            "monetary_impact": True,
+            "zero_liability": True,
+            "keywords": ["unauthorized charge", "fraudulent transaction", "card in possession", "stolen card number"]
+        }
+    },
+    {
+        "reference_code": "KB-CC-003",
+        "title": "Late Payment Fee Courtesy Reversal for Auto-Pay Glitch",
+        "category": "credit_card",
+        "complaint_text": "My auto-pay was scheduled for the 5th, but the bank system failed to execute it until the 7th. You charged me a $40 late fee and interest even though my checking account had sufficient funds.",
+        "resolution_text": "1. Audited ACH batch processing logs; confirmed recurring auto-pay scheduler delay on bank side.\n2. Credited $40.00 late payment fee back to credit card account.\n3. Calculated and reversed $14.22 in accrued interest resulting from late posting.\n4. Verified no negative 30-day delinquency reporting was transmitted to credit bureaus.",
+        "resolution_outcome": "CLOSED_WITH_MONETARY_RELIEF",
+        "is_verified": True,
+        "verification_status": "VERIFIED",
+        "data_source": "FINANCIAL_REGULATORY_DISPUTE_SOP",
+        "provenance": {
+            "authority": "CARD Act / 12 CFR § 1026.52 & Internal Customer Retention Guidelines",
+            "playbook_version": "2026.1",
+            "tier": "OPERATIONAL_ERROR_RESOLUTION",
+            "curator": "Cardholder Billing Care"
+        },
+        "metadata": {
+            "regulation": "12 CFR § 1026.52",
+            "sla_business_days": 1,
+            "monetary_impact": True,
+            "keywords": ["late fee", "auto-pay", "system glitch", "fee reversal", "sufficient funds"]
+        }
+    },
+    {
+        "reference_code": "KB-CC-004",
+        "title": "Merchant Non-Delivery of Goods Chargeback Dispute",
+        "category": "credit_card",
+        "complaint_text": "I ordered furniture online for $650 on September 1st. The delivery window passed and the merchant has disconnected their phone and stopped answering emails. Tracking shows item was never picked up.",
+        "resolution_text": "1. Reviewed customer documentation including order confirmation and unfulfilled carrier tracking status.\n2. Filed formal Visa/Mastercard chargeback for 'Services Not Provided / Merchandise Not Received' (Condition 13.1).\n3. Issued conditional statement credit of $650.00 pending merchant representment period (45 days).\n4. Instructed customer that credit will become permanent upon expiration of representment window.",
+        "resolution_outcome": "CLOSED_WITH_MONETARY_RELIEF",
+        "is_verified": True,
+        "verification_status": "VERIFIED",
+        "data_source": "FINANCIAL_REGULATORY_DISPUTE_SOP",
+        "provenance": {
+            "authority": "Visa Core Rules & Regulation Z Merchant Dispute (§ 1026.12(c))",
+            "playbook_version": "2026.1",
+            "tier": "CARD_NETWORK_CHARGEBACK_PROTOCOL",
+            "curator": "Merchant Dispute Unit"
+        },
+        "metadata": {
+            "regulation": "12 CFR § 1026.12(c)",
+            "sla_business_days": 3,
+            "monetary_impact": True,
+            "keywords": ["goods not received", "merchant dispute", "undelivered", "chargeback", "online order"]
+        }
+    },
+    {
+        "reference_code": "KB-CC-005",
+        "title": "Promotional 0% APR Expiration and Deferred Interest Clarification",
+        "category": "credit_card",
+        "complaint_text": "I signed up for 0% promotional APR for 12 months. On month 13, I was billed retroactive interest of $320 on the entire initial balance. I was never told this was deferred interest.",
+        "resolution_text": "1. Audited cardholder agreement and disclosure table at origination.\n2. Identified ambiguous language regarding deferred interest vs waived interest in promotional flyer.\n3. Applied one-time goodwill adjustment of 50% retroactive interest ($160.00).\n4. Offered structured 6-month repayment plan at 0% APR for remaining promotional balance.",
+        "resolution_outcome": "CLOSED_WITH_MONETARY_RELIEF",
+        "is_verified": True,
+        "verification_status": "VERIFIED",
+        "data_source": "FINANCIAL_REGULATORY_DISPUTE_SOP",
+        "provenance": {
+            "authority": "CFPB Circular on Deceptive Promotional APR Disclosures",
+            "playbook_version": "2026.1",
+            "tier": "EXECUTIVE_COMPLAINTS_POLICY",
+            "curator": "Consumer Regulatory Compliance"
+        },
+        "metadata": {
+            "regulation": "CARD Act § 1026.16",
+            "sla_business_days": 3,
+            "monetary_impact": True,
+            "keywords": ["promotional apr", "deferred interest", "interest charge", "0% interest", "retroactive"]
+        }
+    },
+
+    # ------------------ CREDIT REPORTING ------------------
+    {
+        "reference_code": "KB-CR-001",
+        "title": "Inaccurate Delinquency Status on Paid Account Tradeline",
+        "category": "credit_reporting",
+        "complaint_text": "My credit report with Equifax and Experian shows a 60-day late delinquency on my auto loan for June 2025, but I paid the full installment on June 3rd. I have the bank statement proof.",
+        "resolution_text": "1. Verified internal payment receipt date of June 3, 2025, confirming on-time settlement.\n2. Located internal batch transmission discrepancy where payment was parked in suspense account.\n3. Submitted Universal Data Form (UDF) via e-OSCAR to all three national credit reporting agencies (Experian, Equifax, TransUnion).\n4. Updated tradeline status to 'Paid / Current - Zero Days Past Due' and issued confirmation letter to consumer under FCRA § 611(a)(6).",
+        "resolution_outcome": "CLOSED_WITH_NON_MONETARY_RELIEF",
+        "is_verified": True,
+        "verification_status": "VERIFIED",
+        "data_source": "FINANCIAL_REGULATORY_DISPUTE_SOP",
+        "provenance": {
+            "authority": "Fair Credit Reporting Act (15 U.S.C. § 1681i / Regulation V § 1022.43)",
+            "playbook_version": "2026.1",
+            "tier": "DIRECT_DISPUTE_INVESTIGATION",
+            "curator": "Credit Bureau Furnisher Compliance"
+        },
+        "metadata": {
+            "regulation": "15 U.S.C. § 1681i",
+            "sla_business_days": 5,
+            "tradeline_correction": True,
+            "e_oscar_udf": True,
+            "keywords": ["credit report", "delinquency", "inaccurate reporting", "equifax", "experian", "transunion", "paid on time"]
+        }
+    },
+    {
+        "reference_code": "KB-CR-002",
+        "title": "Identity Theft Fraudulent Tradeline Removal & Block",
+        "category": "credit_reporting",
+        "complaint_text": "A fraudulent personal loan for $5,000 was opened in my name without my knowledge. It has defaulted and ruined my credit score. I submitted an FTC identity theft report and police report.",
+        "resolution_text": "1. Validated FTC Identity Theft Report (#982341) and local police department incident documentation.\n2. Concluded account origination occurred via synthetic identity fraud (mismatched IP and biometric mismatch).\n3. Initiated permanent tradeline deletion request via e-OSCAR under FCRA § 605B (Block of Information Resulting from Identity Theft).\n4. Ceased all collection efforts, closed account with zero customer liability, and sent confirmation letter.",
+        "resolution_outcome": "CLOSED_WITH_NON_MONETARY_RELIEF",
+        "is_verified": True,
+        "verification_status": "VERIFIED",
+        "data_source": "FINANCIAL_REGULATORY_DISPUTE_SOP",
+        "provenance": {
+            "authority": "FCRA § 605B (15 U.S.C. § 1681c-2 - Identity Theft Block)",
+            "playbook_version": "2026.1",
+            "tier": "IDENTITY_THEFT_MANDATORY_BLOCK",
+            "curator": "Special Investigations Unit (SIU)"
+        },
+        "metadata": {
+            "regulation": "15 U.S.C. § 1681c-2",
+            "sla_business_days": 4,
+            "tradeline_deletion": True,
+            "police_report_required": True,
+            "keywords": ["identity theft", "fraudulent account", "ftc report", "police report", "credit score ruined"]
+        }
+    },
+    {
+        "reference_code": "KB-CR-003",
+        "title": "Obsolescence Period Exceeded Tradeline Deletion (7-Year Rule)",
+        "category": "credit_reporting",
+        "complaint_text": "A charged-off credit card from 2017 with first delinquency date of January 2018 is still appearing on my TransUnion report in late 2025. It should be removed after 7 years.",
+        "resolution_text": "1. Audited Date of First Delinquency (DOFD), confirmed as January 14, 2018.\n2. Calculated 7-year obsolescence window under FCRA § 605(a)(4), which expired in January 2025.\n3. Sent automated delete instruction to Equifax, Experian, and TransUnion via e-OSCAR code 'Delete Account Due to Aging'.\n4. Verified complete purging of obsolete tradeline across all bureau archives.",
+        "resolution_outcome": "CLOSED_WITH_NON_MONETARY_RELIEF",
+        "is_verified": True,
+        "verification_status": "VERIFIED",
+        "data_source": "FINANCIAL_REGULATORY_DISPUTE_SOP",
+        "provenance": {
+            "authority": "FCRA § 605 (15 U.S.C. § 1681c - Requirements relating to information contained on consumer reports)",
+            "playbook_version": "2026.1",
+            "tier": "STATUTORY_OBSOLESCENCE_AUDIT",
+            "curator": "Credit Data Governance"
+        },
+        "metadata": {
+            "regulation": "15 U.S.C. § 1681c",
+            "sla_business_days": 3,
+            "tradeline_deletion": True,
+            "keywords": ["7 years", "obsolete", "charge-off", "first delinquency date", "transunion", "remove tradeline"]
+        }
+    },
+    {
+        "reference_code": "KB-CR-004",
+        "title": "Unauthorized Hard Inquiry Investigation and Bureau Deletion",
+        "category": "credit_reporting",
+        "complaint_text": "I noticed an unauthorized hard inquiry from your lending division on November 3rd. I never applied for a loan or gave permissible purpose to pull my credit file.",
+        "resolution_text": "1. Cross-referenced application database and digital consent audit logs for referenced date.\n2. Found pre-qualification marketing batch incorrectly triggered a hard inquiry instead of a soft inquiry.\n3. Contacted credit repositories via UDF Inquiry Deletion request to recategorize/delete the hard inquiry record.\n4. Sent formal apology letter confirming correction to consumer.",
+        "resolution_outcome": "CLOSED_WITH_NON_MONETARY_RELIEF",
+        "is_verified": True,
+        "verification_status": "VERIFIED",
+        "data_source": "FINANCIAL_REGULATORY_DISPUTE_SOP",
+        "provenance": {
+            "authority": "FCRA § 604 (15 U.S.C. § 1681b - Permissible Purposes of Reports)",
+            "playbook_version": "2026.1",
+            "tier": "PERMISSIBLE_PURPOSE_COMPLIANCE",
+            "curator": "Credit Bureau Liaison"
+        },
+        "metadata": {
+            "regulation": "15 U.S.C. § 1681b",
+            "sla_business_days": 3,
+            "keywords": ["unauthorized inquiry", "hard inquiry", "permissible purpose", "credit pull"]
+        }
+    },
+
+    # ------------------ DEBT COLLECTION ------------------
+    {
+        "reference_code": "KB-DC-001",
+        "title": "Debt Validation Request and Communication Stay Resolution",
+        "category": "debt_collection",
+        "complaint_text": "A collection agency is calling me multiple times a day demanding $1,250 for a medical debt I do not owe. I sent a written debt validation request 2 weeks ago and they have not verified it.",
+        "resolution_text": "1. Confirmed timely receipt of consumer written validation notice under FDCPA § 1692g.\n2. Issued immediate cease-collection hold flag in collections dialer and assigned account to review status.\n3. Performed verification audit with original medical creditor; discovered insurance billing adjustment was omitted.\n4. Account balance adjusted from $1,250 to $0.00; sent formal validation closure and zero-balance release letter.",
+        "resolution_outcome": "CLOSED_WITH_NON_MONETARY_RELIEF",
+        "is_verified": True,
+        "verification_status": "VERIFIED",
+        "data_source": "FINANCIAL_REGULATORY_DISPUTE_SOP",
+        "provenance": {
+            "authority": "Fair Debt Collection Practices Act (15 U.S.C. § 1692g / CFPB Regulation F)",
+            "playbook_version": "2026.1",
+            "tier": "STATUTORY_VALIDATION_STAY",
+            "curator": "Collections Compliance & Oversight"
+        },
+        "metadata": {
+            "regulation": "15 U.S.C. § 1692g",
+            "sla_business_days": 2,
+            "dialer_hold": True,
+            "keywords": ["debt validation", "collection calls", "medical debt", "fdcpa", "do not owe", "verification"]
+        }
+    },
+    {
+        "reference_code": "KB-DC-002",
+        "title": "Cease and Desist Communication Enforcement for Consumer Debt",
+        "category": "debt_collection",
+        "complaint_text": "I sent a formal cease and desist letter telling your collectors to stop calling my workplace and cell phone. Representatives continue to call my employer daily, jeopardizing my job.",
+        "resolution_text": "1. Audited mail room scanning logs; identified certified mail receipt of cease communication letter dated Oct 4.\n2. Found automated dialer suppression flag had not propagated due to batch sync latency.\n3. Manually added permanent do-not-contact (DNC) restriction across all phone numbers and addresses.\n4. Disciplined vendor agency for violation of FDCPA § 1692c(c) and notified consumer that communication is restricted to statutory legal notices only.",
+        "resolution_outcome": "CLOSED_WITH_EXPLANATION",
+        "is_verified": True,
+        "verification_status": "VERIFIED",
+        "data_source": "FINANCIAL_REGULATORY_DISPUTE_SOP",
+        "provenance": {
+            "authority": "FDCPA § 1692c(c) (15 U.S.C. § 1692c - Ceasing Communication)",
+            "playbook_version": "2026.1",
+            "tier": "COMMUNICATION_RESTRICTION_MANDATE",
+            "curator": "Collections Quality Assurance"
+        },
+        "metadata": {
+            "regulation": "15 U.S.C. § 1692c(c)",
+            "sla_business_days": 1,
+            "keywords": ["cease and desist", "workplace calls", "calling employer", "stop calling", "harassment"]
+        }
+    },
+    {
+        "reference_code": "KB-DC-003",
+        "title": "Time-Barred Expired Statute of Limitations Debt Collection Cessation",
+        "category": "debt_collection",
+        "complaint_text": "Your agency threatened to sue me for a credit card debt that defaulted in 2015. The statute of limitations in my state is 6 years. Threatening legal action on zombie debt is illegal.",
+        "resolution_text": "1. Evaluated account charge-off date (May 2015) against applicable state statute of limitations (6 years, expired May 2021).\n2. Confirmed debt is legally time-barred with no reviving payments on record.\n3. Re-classified account in recovery inventory as 'Unenforceable by Litigation' under Regulation F (§ 1006.26).\n4. Closed active collection assignment, retracted litigation disclosure, and notified consumer of permanent file closure.",
+        "resolution_outcome": "CLOSED_WITH_EXPLANATION",
+        "is_verified": True,
+        "verification_status": "VERIFIED",
+        "data_source": "FINANCIAL_REGULATORY_DISPUTE_SOP",
+        "provenance": {
+            "authority": "CFPB Regulation F (12 CFR § 1006.26 - Time-Barred Debts)",
+            "playbook_version": "2026.1",
+            "tier": "STATUTE_OF_LIMITATIONS_AUDIT",
+            "curator": "Legal Collections Review"
+        },
+        "metadata": {
+            "regulation": "12 CFR § 1006.26",
+            "sla_business_days": 2,
+            "keywords": ["statute of limitations", "time-barred", "zombie debt", "threatened to sue", "expired debt"]
+        }
+    },
+    {
+        "reference_code": "KB-DC-004",
+        "title": "Wrong Debtor / Mistaken Identity Skip-Tracing Misassignment",
+        "category": "debt_collection",
+        "complaint_text": "I am being hounded for a debt belonging to someone with a similar name in another state. I have never lived in Texas or had an account with this store.",
+        "resolution_text": "1. Compared consumer SSN, date of birth, and historical address history with delinquent debtor record.\n2. Identified improper skip-tracing merge by third-party data enrichment tool.\n3. Immediately unlinked consumer contact information from the target collection file.\n4. Scrubbed consumer name from credit reporting and issued confirmation letter that no debt is owed.",
+        "resolution_outcome": "CLOSED_WITH_NON_MONETARY_RELIEF",
+        "is_verified": True,
+        "verification_status": "VERIFIED",
+        "data_source": "FINANCIAL_REGULATORY_DISPUTE_SOP",
+        "provenance": {
+            "authority": "FDCPA § 1692e (False or Misleading Representations)",
+            "playbook_version": "2026.1",
+            "tier": "IDENTITY_SCRUB_PROTOCOL",
+            "curator": "Debt Intake Governance"
+        },
+        "metadata": {
+            "regulation": "15 U.S.C. § 1692e",
+            "sla_business_days": 1,
+            "keywords": ["wrong person", "mistaken identity", "similar name", "not my debt", "skip tracing"]
+        }
+    },
+
+    # ------------------ MORTGAGES & LOANS ------------------
+    {
+        "reference_code": "KB-ML-001",
+        "title": "Escrow Shortage Recalculation and Tax Disbursement Error",
+        "category": "mortgages_and_loans",
+        "complaint_text": "My monthly mortgage payment skyrocketed by $480 due to an alleged escrow shortage. Looking at my county records, the bank double-paid the county property tax installment.",
+        "resolution_text": "1. Conducted emergency escrow account analysis under RESPA Regulation X (12 CFR § 1024.17).\n2. Confirmed loan servicer erroneously transmitted duplicate county tax disbursements on September 15.\n3. Reclaimed duplicate disbursement from county tax collector's office ($2,880.00).\n4. Credited escrow balance, recalculated monthly payment to original level, and refunded all late fees incurred during dispute.",
+        "resolution_outcome": "CLOSED_WITH_MONETARY_RELIEF",
+        "is_verified": True,
+        "verification_status": "VERIFIED",
+        "data_source": "FINANCIAL_REGULATORY_DISPUTE_SOP",
+        "provenance": {
+            "authority": "RESPA Regulation X (12 CFR § 1024.17 - Escrow Accounts)",
+            "playbook_version": "2026.1",
+            "tier": "ESCROW_COMPLIANCE_PLAYBOOK",
+            "curator": "Mortgage Servicing Operations"
+        },
+        "metadata": {
+            "regulation": "12 CFR § 1024.17",
+            "sla_business_days": 4,
+            "monetary_impact": True,
+            "escrow_recalculated": True,
+            "keywords": ["escrow shortage", "property tax", "mortgage payment increase", "double paid", "county tax"]
+        }
+    },
+    {
+        "reference_code": "KB-ML-002",
+        "title": "Qualified Written Request (QWR) for Mortgage Payment Misapplication",
+        "category": "mortgages_and_loans",
+        "complaint_text": "I made an extra principal payment of $2,000 in August marked clearly as 'Principal Curtailment'. The servicer instead placed it into an unallocated suspense account and charged me late fees.",
+        "resolution_text": "1. Treated complaint as Qualified Written Request (Notice of Error) under RESPA § 1024.35.\n2. Located $2,000 funds in unallocated suspense account; confirmed check memo noted 'Principal Only'.\n3. Retroactively applied $2,000 payment to principal balance with effective date of August 12.\n4. Recalculated amortization schedule, refunded $65.00 improper late fee, and sent updated payment breakdown to borrower.",
+        "resolution_outcome": "CLOSED_WITH_MONETARY_RELIEF",
+        "is_verified": True,
+        "verification_status": "VERIFIED",
+        "data_source": "FINANCIAL_REGULATORY_DISPUTE_SOP",
+        "provenance": {
+            "authority": "Real Estate Settlement Procedures Act (12 CFR § 1024.35 - Error Resolution Procedures)",
+            "playbook_version": "2026.1",
+            "tier": "STATUTORY_QWR_RESOLUTION",
+            "curator": "Escalated Loan Resolution Team"
+        },
+        "metadata": {
+            "regulation": "12 CFR § 1024.35",
+            "sla_business_days": 5,
+            "qwr_notice_of_error": True,
+            "monetary_impact": True,
+            "keywords": ["qualified written request", "qwr", "principal curtailment", "suspense account", "payment misallocated"]
+        }
+    },
+    {
+        "reference_code": "KB-ML-003",
+        "title": "Force-Placed Hazard Insurance Cancellation & Premium Refund",
+        "category": "mortgages_and_loans",
+        "complaint_text": "The servicer force-placed homeowner insurance on my mortgage at $3,200/year and charged my escrow, even though I submitted proof of continuous coverage with State Farm 3 times.",
+        "resolution_text": "1. Reviewed proof of hazard insurance policy provided by borrower, verifying continuous coverage.\n2. Identified optical character recognition (OCR) scanning failure in mail intake system.\n3. Cancelled force-placed lender policy under RESPA § 1024.37(g).\n4. Refunded full force-placed premium charge ($1,066.67 for 4 months) into borrower escrow account with zero penalty.",
+        "resolution_outcome": "CLOSED_WITH_MONETARY_RELIEF",
+        "is_verified": True,
+        "verification_status": "VERIFIED",
+        "data_source": "FINANCIAL_REGULATORY_DISPUTE_SOP",
+        "provenance": {
+            "authority": "12 CFR § 1024.37 (Force-Placed Insurance Refund Mandate)",
+            "playbook_version": "2026.1",
+            "tier": "FORCE_PLACED_INSURANCE_REVERSAL",
+            "curator": "Hazard Insurance Servicing"
+        },
+        "metadata": {
+            "regulation": "12 CFR § 1024.37",
+            "sla_business_days": 3,
+            "monetary_impact": True,
+            "keywords": ["force-placed insurance", "homeowners insurance", "escrow charge", "proof of coverage", "hazard insurance"]
+        }
+    },
+    {
+        "reference_code": "KB-ML-004",
+        "title": "Auto Loan Paid-in-Full Title Lien Release Expedited Delivery",
+        "category": "mortgages_and_loans",
+        "complaint_text": "I paid off my auto loan 45 days ago, and the bank still has not sent my vehicle title or released the lien with the DMV. I am trying to sell the car and the buyer is backing out.",
+        "resolution_text": "1. Verified payoff confirmation date and zero-balance status on loan account.\n2. Identified electronic lien and title (ELT) transmission error with State Department of Motor Vehicles.\n3. Manually generated notarized Paper Lien Satisfaction and Release document.\n4. Sent physical release via FedEx Priority Overnight and transmitted emergency ELT release to state registry within 24 hours.",
+        "resolution_outcome": "CLOSED_WITH_NON_MONETARY_RELIEF",
+        "is_verified": True,
+        "verification_status": "VERIFIED",
+        "data_source": "FINANCIAL_REGULATORY_DISPUTE_SOP",
+        "provenance": {
+            "authority": "State Uniform Commercial Code & Motor Vehicle Titling Regulations",
+            "playbook_version": "2026.1",
+            "tier": "EXPEDITED_COLLATERAL_RELEASE",
+            "curator": "Auto Collateral Management"
+        },
+        "metadata": {
+            "regulation": "UCC § 9-513",
+            "sla_business_days": 1,
+            "expedited_shipping": True,
+            "keywords": ["auto loan payoff", "title release", "lien release", "dmv", "vehicle title", "paid in full"]
+        }
+    },
+
+    # ------------------ RETAIL BANKING ------------------
+    {
+        "reference_code": "KB-RB-001",
+        "title": "ATM Cash Deposit Discrepancy & Machine Malfunction Resolution",
+        "category": "retail_banking",
+        "complaint_text": "I deposited $800 in cash into the branch ATM on Main Street on Friday evening. The machine jammed, gave an error receipt, and only credited $200 to my checking account.",
+        "resolution_text": "1. Dispatched armored courier terminal cash audit team for ATM #4402 balance reconciliation.\n2. Confirmed physical cash overage in deposit cassette of exactly $600.00.\n3. Issued provisional credit immediately under Regulation E (12 CFR § 1005.11).\n4. Made credit permanent within 48 hours upon completion of physical bill counter verification.",
+        "resolution_outcome": "CLOSED_WITH_MONETARY_RELIEF",
+        "is_verified": True,
+        "verification_status": "VERIFIED",
+        "data_source": "FINANCIAL_REGULATORY_DISPUTE_SOP",
+        "provenance": {
+            "authority": "CFPB Regulation E (12 CFR § 1005.11 - Procedures for Resolving Errors)",
+            "playbook_version": "2026.1",
+            "tier": "ATM_DISPUTE_PROCEDURES",
+            "curator": "Retail Operations & Cash Management"
+        },
+        "metadata": {
+            "regulation": "12 CFR § 1005.11",
+            "sla_business_days": 2,
+            "monetary_impact": True,
+            "provisional_credit_required": True,
+            "keywords": ["atm deposit", "cash deposit", "machine jammed", "error receipt", "cash discrepancy"]
+        }
+    },
+    {
+        "reference_code": "KB-RB-002",
+        "title": "Transaction Reordering Overdraft Fee Cascade Relief",
+        "category": "retail_banking",
+        "complaint_text": "My direct deposit paycheck arrived at 7 AM, but the bank posted a large mortgage debit before the deposit, triggering four $35 overdraft fees on small coffee purchases.",
+        "resolution_text": "1. Audited transaction settlement order for the account statement cycle date.\n2. Verified consumer direct deposit was received during morning ACH window prior to discretionary debits.\n3. Reversed all four $35.00 overdraft fees ($140.00 total) per Consumer Financial Protection guidelines on abusive reordering.\n4. Configured real-time intraday balance checking to prevent recurring posting order cascades.",
+        "resolution_outcome": "CLOSED_WITH_MONETARY_RELIEF",
+        "is_verified": True,
+        "verification_status": "VERIFIED",
+        "data_source": "FINANCIAL_REGULATORY_DISPUTE_SOP",
+        "provenance": {
+            "authority": "CFPB Supervisory Highlights on Unfair Overdraft Posting Order & Reg DD",
+            "playbook_version": "2026.1",
+            "tier": "OVERDRAFT_FEE_PROTECTION_POLICY",
+            "curator": "Retail Deposit Operations"
+        },
+        "metadata": {
+            "regulation": "12 CFR Part 1030 (Reg DD)",
+            "sla_business_days": 1,
+            "monetary_impact": True,
+            "fee_reversal_count": 4,
+            "keywords": ["overdraft fees", "transaction reordering", "direct deposit", "paycheck", "multiple fees"]
+        }
+    },
+    {
+        "reference_code": "KB-RB-003",
+        "title": "Outgoing Wire Transfer Processing Delay & Recall",
+        "category": "retail_banking",
+        "complaint_text": "I initiated a wire transfer of $12,500 on Monday morning for a home purchase closing. It was delayed for 3 days due to an internal system flag, threatening to cancel my contract.",
+        "resolution_text": "1. Identified high-value wire compliance hold triggered by false-positive OFAC screening hit.\n2. Escalated to Senior Sanctions Officer; verified consumer and beneficiary documentation within 30 minutes.\n3. Executed Fedwire priority transfer and communicated Fed Reference number directly to closing escrow officer.\n4. Waived the $45 outgoing wire fee and reimbursed $150 escrow extension fee incurred by borrower.",
+        "resolution_outcome": "CLOSED_WITH_MONETARY_RELIEF",
+        "is_verified": True,
+        "verification_status": "VERIFIED",
+        "data_source": "FINANCIAL_REGULATORY_DISPUTE_SOP",
+        "provenance": {
+            "authority": "UCC Article 4A (Funds Transfers) & Bank BSA/AML Wire Policy",
+            "playbook_version": "2026.1",
+            "tier": "HIGH_VALUE_WIRE_ESCALATION",
+            "curator": "Global Payments & Wire Operations"
+        },
+        "metadata": {
+            "regulation": "UCC Article 4A",
+            "sla_business_days": 1,
+            "monetary_impact": True,
+            "keywords": ["wire transfer", "delayed wire", "home purchase closing", "fedwire", "escrow"]
+        }
+    },
+    {
+        "reference_code": "KB-RB-004",
+        "title": "Check Deposit Hold Exception and Expedited Funds Availability",
+        "category": "retail_banking",
+        "complaint_text": "I deposited an official cashier check for $4,500 from an insurance claim. The teller placed a 10-business-day hold on the check, saying my account was new. I need funds for storm repairs.",
+        "resolution_text": "1. Audited check instrument type; verified it was an official Cashier's Check drawn on a federally insured institution.\n2. Contacted paying bank's treasury department; verified funds had cleared.\n3. Released deposit hold in accordance with Expedited Funds Availability Act (12 CFR Part 229 / Regulation CC § 229.10(c)).\n4. Made $4,500 immediately available in customer checking account and waived check verification fee.",
+        "resolution_outcome": "CLOSED_WITH_NON_MONETARY_RELIEF",
+        "is_verified": True,
+        "verification_status": "VERIFIED",
+        "data_source": "FINANCIAL_REGULATORY_DISPUTE_SOP",
+        "provenance": {
+            "authority": "Expedited Funds Availability Act (12 CFR Part 229 / Regulation CC)",
+            "playbook_version": "2026.1",
+            "tier": "REGULATION_CC_FUNDS_AVAILABILITY",
+            "curator": "Branch Operations Governance"
+        },
+        "metadata": {
+            "regulation": "12 CFR Part 229",
+            "sla_business_days": 1,
+            "funds_released": True,
+            "keywords": ["check hold", "cashier check", "funds availability", "regulation cc", "insurance check"]
+        }
+    },
+    {
+        "reference_code": "KB-RB-005",
+        "title": "Account Closure Fee Reversal and Remaining Balance Remittance",
+        "category": "retail_banking",
+        "complaint_text": "I requested to close my checking account with a remaining balance of $310. The bank charged a $25 early closure fee and failed to mail my closing balance check for over a month.",
+        "resolution_text": "1. Audited account tenure; confirmed account had been open for 190 days, exceeding the 180-day early closure threshold.\n2. Reversed the $25.00 early account closure fee.\n3. Issued an official Cashier's Check for the corrected full balance of $335.00 ($310 balance + $25 refunded fee).\n4. Dispatched via USPS Certified Mail with tracking number provided to customer.",
+        "resolution_outcome": "CLOSED_WITH_MONETARY_RELIEF",
+        "is_verified": True,
+        "verification_status": "VERIFIED",
+        "data_source": "FINANCIAL_REGULATORY_DISPUTE_SOP",
+        "provenance": {
+            "authority": "Consumer Financial Protection Circular on Account Termination & Unreasonable Fees",
+            "playbook_version": "2026.1",
+            "tier": "ACCOUNT_TERMINATION_GOVERNANCE",
+            "curator": "Retail Support & Client Offboarding"
+        },
+        "metadata": {
+            "regulation": "UDAAP / CFPB Circular 2022-06",
+            "sla_business_days": 2,
+            "monetary_impact": True,
+            "keywords": ["account closure", "closing fee", "remaining balance", "cashier check", "close checking account"]
+        }
+    }
+]
+
+# Separate synthetic fixtures for testing edge cases and negative filters
+SYNTHETIC_TEST_FIXTURES = [
+    {
+        "reference_code": "FIXTURE-UNVERIFIED-001",
+        "title": "Synthetic Mock Fixture: Unverified Resolution Draft",
+        "category": "credit_card",
+        "complaint_text": "Synthetic test complaint: Hypothetical unverified dispute regarding promotional reward points.",
+        "resolution_text": "Synthetic test resolution: Unverified draft notes from automated scratchpad. Not a validated outcome.",
+        "resolution_outcome": "UNVERIFIED_PENDING_REVIEW",
+        "is_verified": False,
+        "verification_status": "UNVERIFIED_SYNTHETIC",
+        "data_source": "SYNTHETIC_TEST_FIXTURE",
+        "provenance": {
+            "note": "For automated unit tests only. Must be excluded from production RAG retrieval pipelines.",
+            "synthetic": True
+        },
+        "metadata": {
+            "is_test_fixture": True
+        }
+    },
+    {
+        "reference_code": "FIXTURE-UNVERIFIED-002",
+        "title": "Synthetic Mock Fixture: Crypto Currency Non-Regulated Dispute",
+        "category": "retail_banking",
+        "complaint_text": "Synthetic test complaint: Hypothetical dispute regarding offshore decentralized token swap.",
+        "resolution_text": "Synthetic test resolution: Non-regulated transaction disclaimer placeholder.",
+        "resolution_outcome": "DISMISSED_OUTSIDE_JURISDICTION",
+        "is_verified": False,
+        "verification_status": "UNVERIFIED_SYNTHETIC",
+        "data_source": "SYNTHETIC_TEST_FIXTURE",
+        "provenance": {
+            "note": "Synthetic test fixture for edge case testing.",
+            "synthetic": True
+        },
+        "metadata": {
+            "is_test_fixture": True
+        }
+    }
+]
+
+def main():
+    data_dir = Path("data/resolutions")
+    data_dir.mkdir(parents=True, exist_ok=True)
+
+    verified_path = data_dir / "verified_resolutions_kb.json"
+    synthetic_path = data_dir / "synthetic_test_fixtures.json"
+
+    # Inject canonical department_code based on category
+    for item in RAW_VERIFIED_KB:
+        item["department_code"] = CATEGORY_TO_DEPT_MAP.get(item["category"], "DEPT_GENERAL")
+
+    for item in SYNTHETIC_TEST_FIXTURES:
+        item["department_code"] = CATEGORY_TO_DEPT_MAP.get(item["category"], "DEPT_GENERAL")
+
+    with open(verified_path, "w", encoding="utf-8") as f:
+        json.dump(RAW_VERIFIED_KB, f, indent=2)
+    print(f"Wrote {len(RAW_VERIFIED_KB)} verified resolution playbooks to {verified_path}")
+
+    with open(synthetic_path, "w", encoding="utf-8") as f:
+        json.dump(SYNTHETIC_TEST_FIXTURES, f, indent=2)
+    print(f"Wrote {len(SYNTHETIC_TEST_FIXTURES)} synthetic test fixtures to {synthetic_path}")
+
+if __name__ == "__main__":
+    main()

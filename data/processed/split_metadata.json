@@ -1,0 +1,53 @@
+{
+  "dataset_name": "Consumer Complaints Dataset for NLP",
+  "source_url": "https://www.kaggle.com/datasets/shashwatwork/consume-complaints-dataset-fo-nlp",
+  "ingestion_timestamp": "2026-10-15T18:51:19.066336+00:00",
+  "random_seed": 42,
+  "split_ratio": {
+    "train": 0.7,
+    "validation": 0.15,
+    "test": 0.15
+  },
+  "sample_counts": {
+    "total_cleaned": 124434,
+    "train": 87103,
+    "validation": 18665,
+    "test": 18666
+  },
+  "class_counts_by_split": {
+    "train": {
+      "credit_reporting": 39356,
+      "debt_collection": 14733,
+      "mortgages_and_loans": 13105,
+      "credit_card": 10488,
+      "retail_banking": 9421
+    },
+    "validation": {
+      "credit_reporting": 8433,
+      "debt_collection": 3157,
+      "mortgages_and_loans": 2808,
+      "credit_card": 2248,
+      "retail_banking": 2019
+    },
+    "test": {
+      "credit_reporting": 8434,
+      "debt_collection": 3157,
+      "mortgages_and_loans": 2809,
+      "credit_card": 2247,
+      "retail_banking": 2019
+    }
+  },
+  "leakage_verification": {
+    "train_val_overlap": 0,
+    "train_test_overlap": 0,
+    "val_test_overlap": 0,
+    "leakage_detected": false
+  },
+  "preprocessing_configuration": {
+    "unicode_normalization": "NFKC",
+    "html_stripping": true,
+    "whitespace_normalization": true,
+    "negation_preserved": true,
+    "min_text_length": 10
+  }
+}

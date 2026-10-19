@@ -1,0 +1,62 @@
+{
+  "model_name": "complaint_category_classifier",
+  "model_version": "1.0.0-tfidf-logreg",
+  "algorithm": "TfidfVectorizer + LogisticRegression",
+  "created_at": "2026-10-15T18:53:50.784635+00:00",
+  "random_seed": 42,
+  "fit_duration_seconds": 23.578948,
+  "classes": [
+    "credit_card",
+    "credit_reporting",
+    "debt_collection",
+    "mortgages_and_loans",
+    "retail_banking"
+  ],
+  "num_classes": 5,
+  "hyperparameters": {
+    "tfidf_max_features": 30000,
+    "tfidf_ngram_range": [1, 2],
+    "tfidf_sublinear_tf": true,
+    "clf_C": 1.5,
+    "clf_class_weight": "balanced",
+    "clf_solver": "lbfgs"
+  },
+  "training_samples": 87103,
+  "validation_samples": 18665,
+  "validation_metrics": {
+    "macro_f1": 0.8387,
+    "weighted_f1": 0.8503,
+    "per_class": {
+      "credit_card": {
+        "precision": 0.75,
+        "recall": 0.8381,
+        "f1_score": 0.7916,
+        "support": 2248
+      },
+      "credit_reporting": {
+        "precision": 0.9338,
+        "recall": 0.832,
+        "f1_score": 0.88,
+        "support": 8433
+      },
+      "debt_collection": {
+        "precision": 0.7722,
+        "recall": 0.8248,
+        "f1_score": 0.7977,
+        "support": 3157
+      },
+      "mortgages_and_loans": {
+        "precision": 0.8081,
+        "recall": 0.8999,
+        "f1_score": 0.8516,
+        "support": 2808
+      },
+      "retail_banking": {
+        "precision": 0.8477,
+        "recall": 0.899,
+        "f1_score": 0.8726,
+        "support": 2019
+      }
+    }
+  }
+}

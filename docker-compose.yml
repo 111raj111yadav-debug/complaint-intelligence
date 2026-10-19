@@ -1,0 +1,34 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: complaint_intelligence_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-complaint_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-complaint_secure_dev_pass_2026}
+      POSTGRES_DB: ${POSTGRES_DB:-complaint_intelligence_db}
+    ports:
+      - "${POSTGRES_PORT:-5434}:5432"
+    volumes:
+      - complaint_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-complaint_admin} -d ${POSTGRES_DB:-complaint_intelligence_db}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - complaint_network
+
+volumes:
+  complaint_postgres_data:
+    name: complaint_intelligence_postgres_data
+
+networks:
+  complaint_network:
+    name: complaint_intelligence_network
+    driver: bridge

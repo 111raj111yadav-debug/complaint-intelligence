@@ -1,0 +1,72 @@
+{
+  "evaluation_dataset": "data\\processed\\test.csv",
+  "total_test_samples": 18666,
+  "model_path": "services\\nlp\\artifacts\\category_model.joblib",
+  "overall_metrics": {
+    "macro_f1": 0.8385,
+    "weighted_f1": 0.8482,
+    "accuracy": 0.8469
+  },
+  "majority_class_baseline": {
+    "strategy": "most_frequent",
+    "majority_class": "credit_card",
+    "macro_f1": 0.1245,
+    "weighted_f1": 0.2812,
+    "f1_improvement_over_baseline": 0.714
+  },
+  "per_class_metrics": {
+    "credit_card": {
+      "precision": 0.7535,
+      "recall": 0.8505,
+      "f1_score": 0.7991,
+      "support": 2247
+    },
+    "credit_reporting": {
+      "precision": 0.9312,
+      "recall": 0.8238,
+      "f1_score": 0.8742,
+      "support": 8434
+    },
+    "debt_collection": {
+      "precision": 0.7678,
+      "recall": 0.8286,
+      "f1_score": 0.7971,
+      "support": 3157
+    },
+    "mortgages_and_loans": {
+      "precision": 0.8079,
+      "recall": 0.8925,
+      "f1_score": 0.8481,
+      "support": 2809
+    },
+    "retail_banking": {
+      "precision": 0.8458,
+      "recall": 0.9044,
+      "f1_score": 0.8741,
+      "support": 2019
+    }
+  },
+  "confusion_matrix": {
+    "labels": [
+      "credit_card",
+      "credit_reporting",
+      "debt_collection",
+      "mortgages_and_loans",
+      "retail_banking"
+    ],
+    "matrix_counts": [
+      [1911, 88, 54, 26, 168],
+      [339, 6948, 646, 442, 59],
+      [103, 296, 2616, 96, 46],
+      [51, 118, 73, 2507, 60],
+      [132, 11, 18, 32, 1826]
+    ],
+    "matrix_normalized": [
+      [0.8505, 0.0392, 0.024, 0.0116, 0.0748],
+      [0.0402, 0.8238, 0.0766, 0.0524, 0.007],
+      [0.0326, 0.0938, 0.8286, 0.0304, 0.0146],
+      [0.0182, 0.042, 0.026, 0.8925, 0.0214],
+      [0.0654, 0.0054, 0.0089, 0.0158, 0.9044]
+    ]
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "benchmark_metadata": {
+    "version": "Phase 3 Expanded Benchmark",
+    "total_queries": 35,
+    "answerable_queries": 30,
+    "unanswerable_queries": 5,
+    "corpus_size": 43,
+    "query_types": [
+      "insufficient_evidence",
+      "routine",
+      "security_sensitive",
+      "out_of_domain",
+      "overlapping",
+      "ambiguous"
+    ],
+    "categories_evaluated": [
+      "debt_collection",
+      "credit_card",
+      "credit_reporting",
+      "insufficient_evidence",
+      "retail_banking",
+      "out_of_domain",
+      "mortgages_and_loans",
+      "general_inquiry"
+    ],
+    "embedding_model": "all-MiniLM-L6-v2 (384-dimensional)",
+    "vector_index": "PostgreSQL 16 + pgvector HNSW (vector_cosine_ops)",
+    "evaluation_timestamp": "2026-10-18T08:25:03Z"
+  },
+  "dense_semantic_retrieval": {
+    "hit@1": 0.8,
+    "recall@1": 0.7333,
+    "precision@1": 0.8,
+    "hit@3": 0.9333,
+    "recall@3": 0.8667,
+    "precision@3": 0.3444,
+    "hit@5": 0.9333,
+    "recall@5": 0.8667,
+    "precision@5": 0.2067,
+    "mrr": 0.8611,
+    "avg_latency_ms": 723.22,
+    "p95_latency_ms": 57.41
+  },
+  "tfidf_sparse_baseline": {
+    "hit@1": 0.8,
+    "recall@1": 0.7111,
+    "precision@1": 0.8,
+    "hit@3": 0.8667,
+    "recall@3": 0.7667,
+    "precision@3": 0.3,
+    "hit@5": 0.9,
+    "recall@5": 0.8444,
+    "precision@5": 0.2067,
+    "mrr": 0.8344,
+    "avg_latency_ms": 1.18
+  },
+  "comparison_delta": {
+    "hit@1_delta": 0.0,
+    "hit@3_delta": 0.0666,
+    "recall@3_delta": 0.1,
+    "mrr_delta": 0.0267
+  },
+  "edge_case_and_provenance_behavior": {
+    "unanswerable_queries_count": 5,
+    "abstention_threshold": 0.45,
+    "abstention_rate": 1.0,
+    "in_domain_mean_top_sim": 0.6721,
+    "out_of_domain_mean_top_sim": 0.2881,
+    "provenance_compliance_rate": 1.0
+  }
+}

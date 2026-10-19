@@ -1,0 +1,27 @@
+{
+  "credit_reporting": {
+    "display_name": "Credit Reporting & Repair",
+    "department_code": "DEPT_CREDIT",
+    "department_name": "Credit & Bureau Support"
+  },
+  "debt_collection": {
+    "display_name": "Debt Collection",
+    "department_code": "DEPT_COLLECTIONS",
+    "department_name": "Collections & Dispute Support"
+  },
+  "mortgages_and_loans": {
+    "display_name": "Mortgages & Consumer Loans",
+    "department_code": "DEPT_LOANS",
+    "department_name": "Loan & Mortgage Servicing"
+  },
+  "credit_card": {
+    "display_name": "Credit Card & Prepaid",
+    "department_code": "DEPT_CARDS",
+    "department_name": "Card Services & Billing"
+  },
+  "retail_banking": {
+    "display_name": "Retail Banking Services",
+    "department_code": "DEPT_BANKING",
+    "department_name": "Banking Operations"
+  }
+}

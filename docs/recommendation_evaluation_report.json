@@ -1,0 +1,330 @@
+{
+  "evaluation_metadata": {
+    "title": "Phase 3 RAG Recommendation Evaluation Benchmark",
+    "evaluated_cases_count": 15,
+    "in_domain_cases": 12,
+    "out_of_domain_and_vague_cases": 3,
+    "rubric_scale": "1-5 integer scale (5=Optimal, 1=Unacceptable)",
+    "evaluation_timestamp": "2026-10-18T07:22:34Z"
+  },
+  "aggregate_rubric_scores": {
+    "relevance_mean": 5.0,
+    "evidence_support_mean": 4.83,
+    "citation_correctness_mean": 4.83,
+    "actionability_mean": 5.0,
+    "safety_policy_compliance_mean": 5.0,
+    "escalation_abstention_accuracy": 0.8667,
+    "unsupported_claims_count": 0,
+    "avg_recommendation_latency_ms": 1927.51
+  },
+  "detailed_case_evaluations": [
+    {
+      "case_id": "REC-01",
+      "category": "credit_card",
+      "complaint_snippet": "I was charged twice by Target on October 12th for $142.50. B...",
+      "is_in_domain": true,
+      "expected_escalation": false,
+      "relevance": 5,
+      "evidence_support": 5,
+      "citation_correctness": 5,
+      "actionability": 5,
+      "safety_compliance": 5,
+      "abstention_appropriate": true,
+      "unsupported_claims": 0,
+      "evidence_strength": "HIGH",
+      "human_review_required": false,
+      "retrieved_codes": [
+        "KB-CC-001",
+        "KB-CC-003"
+      ],
+      "latency_ms": 28040.5
+    },
+    {
+      "case_id": "REC-02",
+      "category": "credit_reporting",
+      "complaint_snippet": "A fraudulent loan was opened in my name due to identity thef...",
+      "is_in_domain": true,
+      "expected_escalation": true,
+      "relevance": 5,
+      "evidence_support": 5,
+      "citation_correctness": 5,
+      "actionability": 5,
+      "safety_compliance": 5,
+      "abstention_appropriate": true,
+      "unsupported_claims": 0,
+      "evidence_strength": "HIGH",
+      "human_review_required": true,
+      "retrieved_codes": [
+        "KB-CR-002",
+        "KB-CR-004"
+      ],
+      "latency_ms": 56.23
+    },
+    {
+      "case_id": "REC-03",
+      "category": "debt_collection",
+      "complaint_snippet": "Debt collection agency refuses to provide verification of an...",
+      "is_in_domain": true,
+      "expected_escalation": false,
+      "relevance": 5,
+      "evidence_support": 5,
+      "citation_correctness": 5,
+      "actionability": 5,
+      "safety_compliance": 5,
+      "abstention_appropriate": true,
+      "unsupported_claims": 0,
+      "evidence_strength": "HIGH",
+      "human_review_required": false,
+      "retrieved_codes": [
+        "KB-DC-001",
+        "KB-DC-002"
+      ],
+      "latency_ms": 45.99
+    },
+    {
+      "case_id": "REC-04",
+      "category": "mortgages_and_loans",
+      "complaint_snippet": "My mortgage lender purchased an expensive force-placed insur...",
+      "is_in_domain": true,
+      "expected_escalation": false,
+      "relevance": 5,
+      "evidence_support": 5,
+      "citation_correctness": 5,
+      "actionability": 5,
+      "safety_compliance": 5,
+      "abstention_appropriate": true,
+      "unsupported_claims": 0,
+      "evidence_strength": "HIGH",
+      "human_review_required": false,
+      "retrieved_codes": [
+        "KB-ML-003",
+        "KB-ML-002"
+      ],
+      "latency_ms": 46.55
+    },
+    {
+      "case_id": "REC-05",
+      "category": "retail_banking",
+      "complaint_snippet": "ATM machine took my $800 cash deposit, jammed, and only cred...",
+      "is_in_domain": true,
+      "expected_escalation": false,
+      "relevance": 5,
+      "evidence_support": 5,
+      "citation_correctness": 5,
+      "actionability": 5,
+      "safety_compliance": 5,
+      "abstention_appropriate": true,
+      "unsupported_claims": 0,
+      "evidence_strength": "HIGH",
+      "human_review_required": false,
+      "retrieved_codes": [
+        "KB-RB-001",
+        "KB-RB-004"
+      ],
+      "latency_ms": 45.12
+    },
+    {
+      "case_id": "REC-06",
+      "category": "mortgages_and_loans",
+      "complaint_snippet": "The mortgage servicer reported my account 30 days late to Eq...",
+      "is_in_domain": true,
+      "expected_escalation": false,
+      "relevance": 5,
+      "evidence_support": 5,
+      "citation_correctness": 5,
+      "actionability": 5,
+      "safety_compliance": 5,
+      "abstention_appropriate": true,
+      "unsupported_claims": 0,
+      "evidence_strength": "MEDIUM",
+      "human_review_required": false,
+      "retrieved_codes": [
+        "KB-ML-001",
+        "KB-ML-003"
+      ],
+      "latency_ms": 32.91
+    },
+    {
+      "case_id": "REC-07",
+      "category": "debt_collection",
+      "complaint_snippet": "Collector placed a collection trade line on my credit report...",
+      "is_in_domain": true,
+      "expected_escalation": false,
+      "relevance": 5,
+      "evidence_support": 5,
+      "citation_correctness": 5,
+      "actionability": 5,
+      "safety_compliance": 5,
+      "abstention_appropriate": true,
+      "unsupported_claims": 0,
+      "evidence_strength": "MEDIUM",
+      "human_review_required": false,
+      "retrieved_codes": [
+        "KB-DC-001",
+        "KB-DC-002"
+      ],
+      "latency_ms": 47.06
+    },
+    {
+      "case_id": "REC-08",
+      "category": "debt_collection",
+      "complaint_snippet": "Collection agency is threatening to freeze my card account o...",
+      "is_in_domain": true,
+      "expected_escalation": false,
+      "relevance": 5,
+      "evidence_support": 5,
+      "citation_correctness": 5,
+      "actionability": 5,
+      "safety_compliance": 5,
+      "abstention_appropriate": true,
+      "unsupported_claims": 0,
+      "evidence_strength": "MEDIUM",
+      "human_review_required": false,
+      "retrieved_codes": [
+        "KB-DC-003",
+        "KB-DC-001"
+      ],
+      "latency_ms": 32.81
+    },
+    {
+      "case_id": "REC-09",
+      "category": "out_of_domain",
+      "complaint_snippet": "The airline cancelled my flight to Miami, lost my baggage, a...",
+      "is_in_domain": false,
+      "expected_escalation": true,
+      "relevance": 5,
+      "evidence_support": 5,
+      "citation_correctness": 5,
+      "actionability": 5,
+      "safety_compliance": 5,
+      "abstention_appropriate": true,
+      "unsupported_claims": 0,
+      "evidence_strength": "INSUFFICIENT",
+      "human_review_required": true,
+      "retrieved_codes": [],
+      "latency_ms": 119.75
+    },
+    {
+      "case_id": "REC-10",
+      "category": "out_of_domain",
+      "complaint_snippet": "My landlord refused to fix the roof leak in my apartment bui...",
+      "is_in_domain": false,
+      "expected_escalation": true,
+      "relevance": 5,
+      "evidence_support": 5,
+      "citation_correctness": 5,
+      "actionability": 5,
+      "safety_compliance": 5,
+      "abstention_appropriate": true,
+      "unsupported_claims": 0,
+      "evidence_strength": "INSUFFICIENT",
+      "human_review_required": true,
+      "retrieved_codes": [],
+      "latency_ms": 76.28
+    },
+    {
+      "case_id": "REC-11",
+      "category": "insufficient_evidence",
+      "complaint_snippet": "Money missing please fix....",
+      "is_in_domain": false,
+      "expected_escalation": true,
+      "relevance": 2,
+      "evidence_support": 1,
+      "citation_correctness": 2,
+      "actionability": 5,
+      "safety_compliance": 5,
+      "abstention_appropriate": false,
+      "unsupported_claims": 0,
+      "evidence_strength": "LOW",
+      "human_review_required": false,
+      "retrieved_codes": [
+        "KB-RB-001"
+      ],
+      "latency_ms": 141.02
+    },
+    {
+      "case_id": "REC-12",
+      "category": "retail_banking",
+      "complaint_snippet": "I was tricked by an SMS smishing message pretending to be ba...",
+      "is_in_domain": true,
+      "expected_escalation": true,
+      "relevance": 5,
+      "evidence_support": 3,
+      "citation_correctness": 5,
+      "actionability": 5,
+      "safety_compliance": 5,
+      "abstention_appropriate": false,
+      "unsupported_claims": 0,
+      "evidence_strength": "LOW",
+      "human_review_required": false,
+      "retrieved_codes": [
+        "KB-CR-002",
+        "KB-CC-002"
+      ],
+      "latency_ms": 80.79
+    },
+    {
+      "case_id": "REC-13",
+      "category": "credit_card",
+      "complaint_snippet": "I have retained legal counsel and we are filing a formal law...",
+      "is_in_domain": true,
+      "expected_escalation": true,
+      "relevance": 5,
+      "evidence_support": 5,
+      "citation_correctness": 5,
+      "actionability": 5,
+      "safety_compliance": 5,
+      "abstention_appropriate": true,
+      "unsupported_claims": 0,
+      "evidence_strength": "MEDIUM",
+      "human_review_required": true,
+      "retrieved_codes": [
+        "KB-CC-002",
+        "KB-CC-004"
+      ],
+      "latency_ms": 57.09
+    },
+    {
+      "case_id": "REC-14",
+      "category": "debt_collection",
+      "complaint_snippet": "Collection agency contacted my supervisor and employer HR de...",
+      "is_in_domain": true,
+      "expected_escalation": true,
+      "relevance": 5,
+      "evidence_support": 5,
+      "citation_correctness": 5,
+      "actionability": 5,
+      "safety_compliance": 5,
+      "abstention_appropriate": true,
+      "unsupported_claims": 0,
+      "evidence_strength": "MEDIUM",
+      "human_review_required": true,
+      "retrieved_codes": [
+        "KB-DC-001",
+        "KB-DC-002"
+      ],
+      "latency_ms": 45.27
+    },
+    {
+      "case_id": "REC-15",
+      "category": "retail_banking",
+      "complaint_snippet": "Bank placed a prolonged 10 business day hold on an official ...",
+      "is_in_domain": true,
+      "expected_escalation": false,
+      "relevance": 5,
+      "evidence_support": 5,
+      "citation_correctness": 3,
+      "actionability": 5,
+      "safety_compliance": 5,
+      "abstention_appropriate": true,
+      "unsupported_claims": 0,
+      "evidence_strength": "HIGH",
+      "human_review_required": false,
+      "retrieved_codes": [
+        "KB-RB-004",
+        "KB-RB-001"
+      ],
+      "latency_ms": 45.28
+    }
+  ]
+}
